@@ -44,9 +44,26 @@ const List = () => (
     ))}
   </ul>
 );
-const Search = () => (
-  <div>
-    <label htmlFor="search">Search: </label>
-    <input type="text" id="search" />
-  </div>
-);
+const Search = () => {
+  function handleChange(event) {
+    console.log(event);
+    console.log(event.target.value);
+  }
+
+  function handleBlur(event) {
+    console.log(event);
+    console.log("I'm blurry!!");
+  }
+
+  return (
+    <div>
+      <label htmlFor="search">Search: </label>
+      <input
+        type="text"
+        id="search"
+        onChange={handleChange}
+        onBlur={handleBlur}
+      />
+    </div>
+  );
+};
