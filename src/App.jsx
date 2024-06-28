@@ -17,30 +17,36 @@ const list = [
   },
 ];
 
-function App() {
-  return (
-    <div>
-      <h1>My Hacker Stories</h1>
+const App = () => (
+  <div>
+    <h1>My Hacker Stories</h1>
+    <Search />
 
-      <label htmlFor="search">Search: </label>
-      <input type="text" id="search" />
-      <hr />
+    <hr />
 
-      <ul>
-        {list.map((item) => (
-          <li key={item.objectID}>
-            <h2>{item.title}</h2>
-            <a href={item.url} target="_blank">
-              Visit {item.title} Site
-            </a>
-            <p>Authors: {item.author}</p>
-            <p>Comments: {item.num_comments}</p>
-            <p>Points: {item.points}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
+    <List />
+  </div>
+);
 export default App;
+
+const List = () => (
+  <ul>
+    {list.map((item) => (
+      <li key={item.objectID}>
+        <h2>{item.title}</h2>
+        <a href={item.url} target="_blank">
+          Visit {item.title} Site
+        </a>
+        <p>Authors: {item.author}</p>
+        <p>Comments: {item.num_comments}</p>
+        <p>Points: {item.points}</p>
+      </li>
+    ))}
+  </ul>
+);
+const Search = () => (
+  <div>
+    <label htmlFor="search">Search: </label>
+    <input type="text" id="search" />
+  </div>
+);
