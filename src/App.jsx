@@ -1,8 +1,4 @@
-// /* eslint react/prop-types: "off" */
-
 import { useState } from "react";
-
-// import PropTypes from "prop-types";
 
 const App = () => {
   const stories = [
@@ -24,9 +20,15 @@ const App = () => {
     },
   ];
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const handleSearch = (event) => {
-    console.log(event.target.value);
+    setSearchTerm(event.target.value);
   };
+
+  const searchedStories = stories.filter((story) =>
+    story.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div>
@@ -35,7 +37,7 @@ const App = () => {
 
       <hr />
 
-      <List list={stories} />
+      <List list={searchedStories} />
     </div>
   );
 };
@@ -63,36 +65,11 @@ function Item({ item }) {
   );
 }
 
-// List.propTypes = {
-//   list: PropTypes.arrayOf(
-//     PropTypes.exact({
-//       title: PropTypes.string,
-//       url: PropTypes.string,
-//       author: PropTypes.string,
-//       num_comments: PropTypes.number,
-//       points: PropTypes.number,
-//       objectID: PropTypes.number,
-//     })
-//   ),
-// };
-
-const Search = (props) => {
-  const [searchTerm, setSearchTerm] = useState("");
-
-  function handleChange(event) {
-    setSearchTerm(event.target.value);
-
-    props.onSearch(event);
-  }
-
+const Search = ({ onSearch }) => {
   return (
     <div>
       <label htmlFor="search">Search: </label>
-      <input type="text" id="search" onChange={handleChange} />
-
-      <p>
-        Seaching for <strong>{searchTerm}</strong>.
-      </p>
+      <input type="text" id="search" onChange={onSearch} />
     </div>
   );
 };
