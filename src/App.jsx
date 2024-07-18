@@ -1,4 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const useStorageState = (key, initialState) => {
+  const [value, setValue] = useState(localStorage.getItem(key) || initialState);
+
+  useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
+};
 
 const App = () => {
   const stories = [
@@ -20,7 +30,7 @@ const App = () => {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -33,7 +43,7 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      <Search onSearch={handleSearch} />
+      <Search search={searchTerm} onSearch={handleSearch} />
 
       <hr />
 
@@ -43,33 +53,29 @@ const App = () => {
 };
 export default App;
 
-const List = (props) => (
+const List = ({ list }) => (
   <ul>
-    {props.list.map((item) => (
+    {list.map((item) => (
       <Item key={item.objectID} item={item} />
     ))}
   </ul>
 );
 
-function Item({ item }) {
-  return (
-    <li>
-      <h2>{item.title}</h2>
-      <a href={item.url} target="_blank">
-        Visit {item.title} Site
-      </a>
-      <p>Authors: {item.author}</p>
-      <p>Comments: {item.num_comments}</p>
-      <p>Points: {item.points}</p>
-    </li>
-  );
-}
+const Item = ({ item }) => (
+  <li>
+    <h2>{item.title}</h2>
+    <a href={item.url} target="_blank">
+      Visit {item.title} Site
+    </a>
+    <p>Authors: {item.author}</p>
+    <p>Comments: {item.num_comments}</p>
+    <p>Points: {item.points}</p>
+  </li>
+);
 
-const Search = ({ onSearch }) => {
-  return (
-    <div>
-      <label htmlFor="search">Search: </label>
-      <input type="text" id="search" onChange={onSearch} />
-    </div>
-  );
-};
+const Search = ({ onSearch, search }) => (
+  <>
+    <label htmlFor="search">Search: </label>
+    <input type="text" id="search" value={search} onChange={onSearch} />
+  </>
+);
