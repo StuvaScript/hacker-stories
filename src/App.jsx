@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
@@ -11,26 +11,90 @@ const useStorageState = (key, initialState) => {
 };
 
 const App = () => {
-  const initialStories = [
-    {
-      title: "React",
-      url: "https://reactjs.org/",
-      author: "Jordan Walke",
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: "Redux",
-      url: "https://redux.js.org/",
-      author: "Dan Abramov, Andrew Clark",
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ];
+  // const initialStories = [
+  //   {
+  //     title: "React",
+  //     url: "https://reactjs.org/",
+  //     author: "Jordan Walke",
+  //     num_comments: 3,
+  //     points: 4,
+  //     objectID: 0,
+  //   },
+  //   {
+  //     title: "Redux",
+  //     url: "https://redux.js.org/",
+  //     author: "Dan Abramov, Andrew Clark",
+  //     num_comments: 2,
+  //     points: 5,
+  //     objectID: 1,
+  //   },
+  // ];
 
-  const [stories, setStories] = useState(initialStories);
+  // const getAsyncStories = () =>
+  //   new Promise((resolve) =>
+  //     setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
+  //   );
+
+  const getAsyncStories = () =>
+    new Promise((resolve, reject) => setTimeout(reject, 2000));
+
+  // const setStories = "SET_STORIES";
+  const removeStory = "REMOVE_STORY";
+  const storiesFetchInit = "STORIES_FETCH_INIT";
+  const storiesFetchSuccess = "STORIES_FETCH_SUCCESS";
+  const storiesFetchFailure = "STORIES_FETCH_FAILURE";
+
+  const storiesReducer = (state, action) => {
+    switch (action.type) {
+      case storiesFetchInit:
+        return {
+          ...state,
+          isLoading: true,
+          isError: false,
+        };
+      case storiesFetchSuccess:
+        return {
+          ...state,
+          isLoading: false,
+          isError: false,
+          data: action.payload,
+        };
+      case storiesFetchFailure:
+        return {
+          ...state,
+          isLoading: false,
+          isError: true,
+        };
+      case removeStory:
+        return {
+          ...state,
+          data: state.data.filter(
+            (story) => action.payload.objectID !== story.objectID
+          ),
+        };
+      default:
+        throw new Error();
+    }
+  };
+
+  const [stories, dispatchStories] = useReducer(storiesReducer, {
+    data: [],
+    isLoading: false,
+    isError: false,
+  });
+
+  useEffect(() => {
+    dispatchStories({ type: storiesFetchInit });
+
+    getAsyncStories()
+      .then((result) => {
+        dispatchStories({
+          type: storiesFetchSuccess,
+          payload: result.data.stories,
+        });
+      })
+      .catch(() => dispatchStories({ type: storiesFetchFailure }));
+  }, []);
 
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
 
@@ -38,16 +102,15 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const searchedStories = stories.filter((story) =>
+  const searchedStories = stories.data.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleRemoveStory = (item) => {
-    const newStories = stories.filter(
-      (story) => item.objectID !== story.objectID
-    );
-
-    setStories(newStories);
+    dispatchStories({
+      type: removeStory,
+      payload: item,
+    });
   };
 
   return (
@@ -61,9 +124,16 @@ const App = () => {
       >
         <strong>Search:</strong>
       </InputWithLabel>
+
       <hr />
 
-      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      {stories.isError && <p>Something went wrong...</p>}
+
+      {stories.isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      )}
     </div>
   );
 };
@@ -86,7 +156,9 @@ const Item = ({ item, onRemoveItem }) => (
     <p>Authors: {item.author}</p>
     <p>Comments: {item.num_comments}</p>
     <p>Points: {item.points}</p>
-    <button onClick={() => onRemoveItem(item)}>Dismiss</button>
+    <button type="button" onClick={() => onRemoveItem(item)}>
+      Dismiss
+    </button>
   </li>
 );
 
