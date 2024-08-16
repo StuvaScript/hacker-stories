@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
@@ -10,35 +10,9 @@ const useStorageState = (key, initialState) => {
   return [value, setValue];
 };
 
+const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
+
 const App = () => {
-  // const initialStories = [
-  //   {
-  //     title: "React",
-  //     url: "https://reactjs.org/",
-  //     author: "Jordan Walke",
-  //     num_comments: 3,
-  //     points: 4,
-  //     objectID: 0,
-  //   },
-  //   {
-  //     title: "Redux",
-  //     url: "https://redux.js.org/",
-  //     author: "Dan Abramov, Andrew Clark",
-  //     num_comments: 2,
-  //     points: 5,
-  //     objectID: 1,
-  //   },
-  // ];
-
-  // const getAsyncStories = () =>
-  //   new Promise((resolve) =>
-  //     setTimeout(() => resolve({ data: { stories: initialStories } }), 2000)
-  //   );
-
-  const getAsyncStories = () =>
-    new Promise((resolve, reject) => setTimeout(reject, 2000));
-
-  // const setStories = "SET_STORIES";
   const removeStory = "REMOVE_STORY";
   const storiesFetchInit = "STORIES_FETCH_INIT";
   const storiesFetchSuccess = "STORIES_FETCH_SUCCESS";
@@ -83,28 +57,31 @@ const App = () => {
     isError: false,
   });
 
-  useEffect(() => {
+  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+
+  const [url, setUrl] = useState(`${API_ENDPOINT}${searchTerm}`);
+
+  const handleFetchStories = useCallback(() => {
     dispatchStories({ type: storiesFetchInit });
 
-    getAsyncStories()
+    fetch(url)
+      .then((response) => response.json())
       .then((result) => {
         dispatchStories({
           type: storiesFetchSuccess,
-          payload: result.data.stories,
+          payload: result.hits,
         });
       })
       .catch(() => dispatchStories({ type: storiesFetchFailure }));
-  }, []);
+  }, [url]);
 
-  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+  useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
 
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-  };
+  const handleSearchInput = (event) => setSearchTerm(event.target.value);
 
-  const searchedStories = stories.data.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSearchSubmit = () => setUrl(`${API_ENDPOINT}${searchTerm}`);
 
   const handleRemoveStory = (item) => {
     dispatchStories({
@@ -120,19 +97,20 @@ const App = () => {
         id="search"
         value={searchTerm}
         isFocused
-        onInputChange={handleSearch}
+        onInputChange={handleSearchInput}
       >
         <strong>Search:</strong>
       </InputWithLabel>
-
+      &nbsp;
+      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
+        Submit
+      </button>
       <hr />
-
       {stories.isError && <p>Something went wrong...</p>}
-
       {stories.isLoading ? (
         <p>Loading...</p>
       ) : (
-        <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
     </div>
   );
@@ -150,9 +128,11 @@ const List = ({ list, onRemoveItem }) => (
 const Item = ({ item, onRemoveItem }) => (
   <li>
     <h2>{item.title}</h2>
-    <a href={item.url} target="_blank">
-      Visit {item.title} Site
-    </a>
+    <p>
+      <a href={item.url} target="_blank">
+        {item.title}
+      </a>
+    </p>
     <p>Authors: {item.author}</p>
     <p>Comments: {item.num_comments}</p>
     <p>Points: {item.points}</p>
