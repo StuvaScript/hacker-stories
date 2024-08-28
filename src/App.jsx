@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 const useStorageState = (key, initialState) => {
@@ -61,18 +62,19 @@ const App = () => {
 
   const [url, setUrl] = useState(`${API_ENDPOINT}${searchTerm}`);
 
-  const handleFetchStories = useCallback(() => {
+  const handleFetchStories = useCallback(async () => {
     dispatchStories({ type: storiesFetchInit });
 
-    fetch(url)
-      .then((response) => response.json())
-      .then((result) => {
-        dispatchStories({
-          type: storiesFetchSuccess,
-          payload: result.hits,
-        });
-      })
-      .catch(() => dispatchStories({ type: storiesFetchFailure }));
+    try {
+      const result = await axios.get(url);
+
+      dispatchStories({
+        type: storiesFetchSuccess,
+        payload: result.data.hits,
+      });
+    } catch {
+      dispatchStories({ type: storiesFetchFailure });
+    }
   }, [url]);
 
   useEffect(() => {
@@ -81,7 +83,11 @@ const App = () => {
 
   const handleSearchInput = (event) => setSearchTerm(event.target.value);
 
-  const handleSearchSubmit = () => setUrl(`${API_ENDPOINT}${searchTerm}`);
+  const handleSearchSubmit = (event) => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+
+    event.preventDefault();
+  };
 
   const handleRemoveStory = (item) => {
     dispatchStories({
@@ -93,19 +99,15 @@ const App = () => {
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      <InputWithLabel
-        id="search"
-        value={searchTerm}
-        isFocused
-        onInputChange={handleSearchInput}
-      >
-        <strong>Search:</strong>
-      </InputWithLabel>
-      &nbsp;
-      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
-        Submit
-      </button>
+
+      <SearchForm
+        searchTerm={searchTerm}
+        onSearchInput={handleSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+      />
+
       <hr />
+
       {stories.isError && <p>Something went wrong...</p>}
       {stories.isLoading ? (
         <p>Loading...</p>
@@ -172,3 +174,20 @@ const InputWithLabel = ({
     </>
   );
 };
+
+const SearchForm = ({ searchTerm, onSearchInput, onSearchSubmit }) => (
+  <form onSubmit={onSearchSubmit}>
+    <InputWithLabel
+      id="search"
+      value={searchTerm}
+      isFocused
+      onInputChange={onSearchInput}
+    >
+      <strong>Search:</strong>
+    </InputWithLabel>
+    &nbsp;
+    <button type="submit" disabled={!searchTerm}>
+      Submit
+    </button>
+  </form>
+);
