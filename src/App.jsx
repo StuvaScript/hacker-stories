@@ -1,5 +1,102 @@
 import axios from "axios";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+// import styles from "./App.module.css";
+import styled from "styled-components";
+import Check from "./assets/check-mark.svg?react";
+import { FaMagnifyingGlass } from "react-icons/fa6";
+
+const StyledContainer = styled.div`
+  height: 100vw;
+  padding: 20px;
+
+  background: #83a4d4;
+  background: linear-gradient(to left, #b6fbff, #83a4d4);
+
+  color: #171212;
+`;
+
+const StyledHeadlinePrimary = styled.h1`
+  font-size: 48px;
+  font-weight: 300;
+  letter-spacing: 2px;
+`;
+
+const StyledItem = styled.li`
+  display: flex;
+  align-items: center;
+  padding-bottom: 5px;
+`;
+
+const StyledColumn = styled.span`
+  padding: 0 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  a {
+    color: inherit;
+  }
+
+  width: ${(props) => props.width};
+`;
+
+const StyledButton = styled.button`
+  background: transparent;
+  border: 1px solid #171212;
+  padding: 5px;
+  cursor: pointer;
+
+  transition: all 0.1s ease-in;
+
+  &:hover {
+    background: #171212;
+    color: #ffffff;
+
+    > svg > g {
+      fill: #ffffff;
+      stroke: #ffffff;
+    }
+  }
+
+  > svg > g {
+    fill: rgba(0, 0, 0, 0);
+    stroke: #000000;
+    stroke-width: 5;
+  }
+`;
+
+const StyledButtonSmall = styled(StyledButton)`
+  padding: 5px;
+`;
+
+const StyledButtonLarge = styled(StyledButton)`
+  padding: 10px;
+
+  > * {
+    scale: 2;
+  }
+`;
+
+const StyledSearchForm = styled.form`
+  padding: 10px 0 20px 0;
+  display: flex;
+  align-items: baseline;
+`;
+
+const StyledLabel = styled.label`
+  border-top: 1px solid #171212;
+  border-left: 1px solid #171212;
+  padding-left: 5px;
+  font-size: 24px;
+`;
+
+const StyledInput = styled.input`
+  border: none;
+  border-bottom: 1px solid #171212;
+  background-color: transparent;
+  font-size: 24px;
+`;
 
 const useStorageState = (key, initialState) => {
   const [value, setValue] = useState(localStorage.getItem(key) || initialState);
@@ -97,8 +194,8 @@ const App = () => {
   };
 
   return (
-    <div>
-      <h1>My Hacker Stories</h1>
+    <StyledContainer>
+      <StyledHeadlinePrimary>My Hacker Stories</StyledHeadlinePrimary>
 
       <SearchForm
         searchTerm={searchTerm}
@@ -106,15 +203,13 @@ const App = () => {
         onSearchSubmit={handleSearchSubmit}
       />
 
-      <hr />
-
       {stories.isError && <p>Something went wrong...</p>}
       {stories.isLoading ? (
         <p>Loading...</p>
       ) : (
         <List list={stories.data} onRemoveItem={handleRemoveStory} />
       )}
-    </div>
+    </StyledContainer>
   );
 };
 export default App;
@@ -128,20 +223,21 @@ const List = ({ list, onRemoveItem }) => (
 );
 
 const Item = ({ item, onRemoveItem }) => (
-  <li>
-    <h2>{item.title}</h2>
-    <p>
+  <StyledItem>
+    <StyledColumn width="40%">
       <a href={item.url} target="_blank">
         {item.title}
       </a>
-    </p>
-    <p>Authors: {item.author}</p>
-    <p>Comments: {item.num_comments}</p>
-    <p>Points: {item.points}</p>
-    <button type="button" onClick={() => onRemoveItem(item)}>
-      Dismiss
-    </button>
-  </li>
+    </StyledColumn>
+    <StyledColumn width="30%">{item.author}</StyledColumn>
+    <StyledColumn width="10%">{item.num_comments}</StyledColumn>
+    <StyledColumn width="10%">{item.points}</StyledColumn>
+    <StyledColumn width="10%">
+      <StyledButtonSmall type="button" onClick={() => onRemoveItem(item)}>
+        <Check height="18px" width="18px" />
+      </StyledButtonSmall>
+    </StyledColumn>
+  </StyledItem>
 );
 
 const InputWithLabel = ({
@@ -162,9 +258,9 @@ const InputWithLabel = ({
 
   return (
     <>
-      <label htmlFor={id}>{children}</label>
+      <StyledLabel htmlFor={id}>{children}</StyledLabel>
       &nbsp;
-      <input
+      <StyledInput
         ref={inputRef}
         type={type}
         id={id}
@@ -176,7 +272,7 @@ const InputWithLabel = ({
 };
 
 const SearchForm = ({ searchTerm, onSearchInput, onSearchSubmit }) => (
-  <form onSubmit={onSearchSubmit}>
+  <StyledSearchForm onSubmit={onSearchSubmit}>
     <InputWithLabel
       id="search"
       value={searchTerm}
@@ -186,8 +282,8 @@ const SearchForm = ({ searchTerm, onSearchInput, onSearchSubmit }) => (
       <strong>Search:</strong>
     </InputWithLabel>
     &nbsp;
-    <button type="submit" disabled={!searchTerm}>
-      Submit
-    </button>
-  </form>
+    <StyledButtonLarge type="submit" disabled={!searchTerm}>
+      <FaMagnifyingGlass />
+    </StyledButtonLarge>
+  </StyledSearchForm>
 );
